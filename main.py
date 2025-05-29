@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from openai import AzureOpenAI
 import os
+import json
 
 client = AzureOpenAI(
     api_key=os.getenv("OPENAI_API_KEY"),
