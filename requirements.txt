@@ -1,0 +1,5 @@
+fastapi
+uvicorn
+asyncio
+os
+openai>=1.3.8
