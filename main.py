@@ -25,15 +25,22 @@ def analizza(input: AnalisiInput):
                 {
                     "type": "text",
                     "text": (
-                        f"Analizza questo oggetto di tipo '{input.tipologia}' della marca '{input.marca}' "
-                        "e valuta la possibilità che sia contraffatto sulla base delle immagini fornite.\n\n"
-                        "Rispondi solo in formato JSON, come segue:\n"
+                        f"Devi analizzare un oggetto di tipo '{input.tipologia}' della marca '{input.marca}', "
+                        "usando solo le immagini fornite. Il tuo obiettivo è stimare la probabilità che l'oggetto sia contraffatto.\n\n"
+                        "⚠️ Rispondi **solo** in formato JSON valido, senza spiegazioni o testo aggiuntivo.\n\n"
+                        "Il formato della risposta deve essere **esattamente questo**:\n\n"
                         "{\n"
-                        "  \"percentuale\": numero intero tra 0 e 100,\n"
-                        "  \"motivazioni\": [\"motivo 1\", \"motivo 2\", \"motivo 3\"]\n"
-                        "}"
+                        "  \"percentuale\": 85,\n"
+                        "  \"motivazioni\": [\n"
+                        "    \"Logo leggermente distorto\",\n"
+                        "    \"Cuciture non regolari\",\n"
+                        "    \"Materiale non coerente con gli originali\"\n"
+                        "  ]\n"
+                        "}\n\n"
+                        "Non includere nulla prima o dopo il JSON. Non inserire note. Solo JSON puro e valido."
                     )
                 }
+
             ]
         }
     ]
@@ -49,6 +56,20 @@ def analizza(input: AnalisiInput):
             model="gpt-4o",
             messages=messaggi
         )
-        return {"analisi": response.choices[0].message.content}
+        content = response.choices[0].message.content.strip()
+        
+        # Rimuove blocchi markdown se presenti
+        if content.startswith("```json"):
+            content = content.removeprefix("```json").strip()
+        if content.endswith("```"):
+            content = content.removesuffix("```").strip()
+        
+        try:
+            analisi_json = json.loads(content)
+            return analisi_json
+        except json.JSONDecodeError:
+            return {"errore": "Risposta non in formato JSON valido", "contenuto_raw": content}
+
+
     except Exception as e:
         return {"errore": str(e)}
