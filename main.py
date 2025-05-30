@@ -5,7 +5,7 @@ import os
 import json
 
 client = AzureOpenAI(
-    api_key=os.getenv("OPENAI_API_KEY"),
+    api_key=os.getenv("OPENAI_APIKEY"),
     api_version="2024-12-01-preview",
     azure_endpoint="https://openaifashion.openai.azure.com/"
 )
