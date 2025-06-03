@@ -3,12 +3,12 @@ from pydantic import BaseModel
 from openai import AzureOpenAI
 import os
 import json
-
 client = AzureOpenAI(
-    api_key=subscription_key,
-    api_version=api_version,
-    azure_endpoint=endpoint,
+    api_key=os.getenv("OPENAI_APIKEY"),
+    api_version="2024-12-01-preview",
+    azure_endpoint="https://openaifashion.openai.azure.com/"
 )
+
 
 # FastAPI
 app = FastAPI()
