@@ -13,11 +13,13 @@ client = AzureOpenAI(
 # FastAPI
 app = FastAPI()
 
+# Modello di input
 class AnalisiInput(BaseModel):
     tipologia: str
     marca: str
     immagini: list[str]  # immagini in base64
 
+# Endpoint
 @app.post("/analizza-oggetto")
 def analizza(input: AnalisiInput):
     messaggi = [
@@ -39,12 +41,10 @@ def analizza(input: AnalisiInput):
                         "    \"Materiale non coerente con gli originali\"\n"
                         "  ]\n"
                         "}\n\n"
-                        "Se non riesci a determinare nulla o le immagini sono fuori contesto, imposta:\n"
-                        "\"percentuale\": \"N.D.\",\n"
-                        "\"motivazioni\": [\"Immagini non sufficienti o fuori contesto\"]\n\n"
                         "Non includere nulla prima o dopo il JSON. Non inserire note. Solo JSON puro e valido."
                     )
                 }
+
             ]
         }
     ]
@@ -57,35 +57,23 @@ def analizza(input: AnalisiInput):
 
     try:
         response = client.chat.completions.create(
-            model=deployment,
+            model="gpt-4o",
             messages=messaggi
         )
         content = response.choices[0].message.content.strip()
-
-        # Rimuove eventuali blocchi Markdown
+        
+        # Rimuove blocchi markdown se presenti
         if content.startswith("```json"):
             content = content.removeprefix("```json").strip()
         if content.endswith("```"):
             content = content.removesuffix("```").strip()
-
+        
         try:
             analisi_json = json.loads(content)
-
-            # Se percentuale non è un numero, o troppo bassa e motivazione ambigua → segna come N.D.
-            if (
-                isinstance(analisi_json.get("percentuale"), (int, float)) and analisi_json["percentuale"] == 0 and
-                any(k in analisi_json.get("motivazioni", [])[0].lower() for k in ["non", "sconosciuto", "indeterminato", "fuori contesto"])
-            ):
-                analisi_json["percentuale"] = "N.D."
-
             return analisi_json
-
         except json.JSONDecodeError:
-            return {
-                "percentuale": "N.D.",
-                "motivazioni": ["Errore di parsing o risposta non valida"],
-                "contenuto_raw": content
-            }
+            return {"errore": "Risposta non in formato JSON valido", "contenuto_raw": content}
+
 
     except Exception as e:
         return {"errore": str(e)}
